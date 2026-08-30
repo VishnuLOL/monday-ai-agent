@@ -52,7 +52,11 @@ class MondayClient:
             if "errors" in data:
                 raise Exception(f"GraphQL Error: {data['errors']}")
                 
-            board_data = data["data"]["boards"][0]["items_page"]
+            boards_response = data.get("data", {}).get("boards", [])
+            if not boards_response or boards_response[0] is None:
+                raise Exception(f"Board ID {board_id} not found or you lack permission to view it.")
+                
+            board_data = boards_response[0]["items_page"]
             items = board_data["items"]
             
             for item in items:
