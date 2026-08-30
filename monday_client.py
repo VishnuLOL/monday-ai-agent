@@ -15,9 +15,14 @@ class MondayClient:
         self.url = "https://api.monday.com/v2"
 
     def fetch_board_data(self, board_id: int) -> list[dict]:
+        # Upgraded query to fetch column titles and map them automatically
         query = """
         query($boardId: [ID!], $cursor: String) {
           boards(ids: $boardId) {
+            columns {
+              id
+              title
+            }
             items_page(limit: 100, cursor: $cursor) {
               cursor
               items {
@@ -25,7 +30,6 @@ class MondayClient:
                 name
                 column_values {
                   id
-                  type
                   text
                 }
               }
@@ -56,13 +60,20 @@ class MondayClient:
             if not boards_response or boards_response[0] is None:
                 raise Exception(f"Board ID {board_id} not found or you lack permission to view it.")
                 
-            board_data = boards_response[0]["items_page"]
+            board_info = boards_response[0]
+            
+            # Map Monday's internal column IDs to their human-readable CSV titles
+            col_map = {col["id"]: col["title"] for col in board_info.get("columns", [])}
+            
+            board_data = board_info["items_page"]
             items = board_data["items"]
             
             for item in items:
                 row = {"item_id": item["id"], "item_name": item["name"]}
                 for col in item["column_values"]:
-                    row[col["id"]] = col.get("text", "") 
+                    col_id = col["id"]
+                    col_title = col_map.get(col_id, col_id) # Default to ID if title is missing
+                    row[col_title] = col.get("text", "") 
                 all_items.append(row)
                 
             cursor = board_data.get("cursor")
