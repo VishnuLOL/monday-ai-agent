@@ -17,20 +17,27 @@ class BIAgent:
         genai.configure(api_key=api_key)
         
         system_instruction = (
-            "You are a senior Business Intelligence Agent for the founders of Skylark Drones. "
-            "You answer strategic business questions using data from monday.com Deals and Work Orders boards. "
-            "Always provide clear business context and explanations, not just raw numbers."
+            "You are a senior Business Intelligence Agent for Skylark Drones. "
+            "Provide clear business context and explanations based on the data."
         )
         
-        # Updated to use the active stable alias to resolve the 404 error
-        self.model = genai.GenerativeModel(
-            model_name="gemini-flash-latest",
-            system_instruction=system_instruction
-        )
+        try:
+            self.model = genai.GenerativeModel(
+                model_name="gemini-flash-latest",
+                system_instruction=system_instruction
+            )
+        except Exception as e:
+            raise RuntimeError(f"Failed to initialize Gemini model: {e}")
 
     def generate_text(self, prompt: str) -> str:
-        response = self.model.generate_content(prompt)
-        return response.text
+        try:
+            # Generate content with explicit safety/error handling
+            response = self.model.generate_content(prompt)
+            if not response or not response.text:
+                return "Error: Gemini returned an empty response. Please try again."
+            return response.text
+        except Exception as e:
+            return f"API Error during generation: {str(e)}"
 
     def chat_response(self, user_message: str, data_context: str = "") -> str:
         prompt = f"""
@@ -39,5 +46,8 @@ class BIAgent:
         
         User Question: {user_message}
         """
-        response = self.model.generate_content(prompt)
-        return response.text
+        try:
+            response = self.model.generate_content(prompt)
+            return response.text
+        except Exception as e:
+            return f"API Error during chat: {str(e)}"
