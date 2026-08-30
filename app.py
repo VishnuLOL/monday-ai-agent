@@ -16,8 +16,8 @@ def load_and_clean_data():
     client = MondayClient()
     cleaner = DataNormalizer()
 
-    DEALS_BOARD_ID = "https://vishnujr106s-team.monday.com/boards/5030970514" 
-    WO_BOARD_ID = "https://vishnujr106s-team.monday.com/boards/5030970498"
+    DEALS_BOARD_ID = "5030970514" 
+    WO_BOARD_ID = "5030970498"
     
     raw_deals = client.fetch_board_data(DEALS_BOARD_ID)
     deals_df, deals_flags = cleaner.clean_deals(raw_deals)
