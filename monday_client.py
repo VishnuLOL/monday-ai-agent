@@ -1,0 +1,68 @@
+import os
+import requests
+
+class MondayClient:
+    def __init__(self):
+        self.api_key = os.environ.get("MONDAY_API_TOKEN")
+        if not self.api_key:
+            raise ValueError("MONDAY_API_TOKEN environment variable is not set.")
+        
+        self.headers = {
+            "Authorization": self.api_key,
+            "API-Version": "2024-01",
+            "Content-Type": "application/json"
+        }
+        self.url = "https://api.monday.com/v2"
+
+    def fetch_board_data(self, board_id: int) -> list[dict]:
+        query = """
+        query($boardId: [ID!], $cursor: String) {
+          boards(ids: $boardId) {
+            items_page(limit: 100, cursor: $cursor) {
+              cursor
+              items {
+                id
+                name
+                column_values {
+                  id
+                  type
+                  text
+                }
+              }
+            }
+          }
+        }
+        """
+        
+        all_items = []
+        cursor = None
+        
+        while True:
+            variables = {"boardId": [board_id]}
+            if cursor:
+                variables["cursor"] = cursor
+                
+            payload = {"query": query, "variables": variables}
+            response = requests.post(self.url, json=payload, headers=self.headers)
+            
+            if response.status_code != 200:
+                raise Exception(f"Monday API Error {response.status_code}: {response.text}")
+                
+            data = response.json()
+            if "errors" in data:
+                raise Exception(f"GraphQL Error: {data['errors']}")
+                
+            board_data = data["data"]["boards"][0]["items_page"]
+            items = board_data["items"]
+            
+            for item in items:
+                row = {"item_id": item["id"], "item_name": item["name"]}
+                for col in item["column_values"]:
+                    row[col["id"]] = col.get("text", "") 
+                all_items.append(row)
+                
+            cursor = board_data.get("cursor")
+            if not cursor:
+                break
+                
+        return all_items
