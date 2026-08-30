@@ -15,7 +15,7 @@ def load_and_clean_data():
     cleaner = DataNormalizer()
     
     DEALS_BOARD_ID = 5030970514 
-    WO_BOARD_ID = 5030970514  
+    WO_BOARD_ID = 5030970498 
     
     raw_deals = client.fetch_board_data(DEALS_BOARD_ID)
     deals_df, deals_flags = cleaner.clean_deals(raw_deals)
@@ -92,6 +92,6 @@ if user_input := st.chat_input("Ask about stuck orders, pipeline, or type /summa
             else:
                 response_text = f"I've analyzed your Monday.com boards ({len(deals_df)} deals, {len(wo_df)} work orders). Try typing **`/summary`** for the executive report or ask **'what are the stuck work orders'** to see operational bottlenecks."
 
-                
+
             st.markdown(response_text)
             st.session_state.messages.append({"role": "assistant", "content": response_text})
