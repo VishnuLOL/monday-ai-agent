@@ -48,6 +48,7 @@ if user_input := st.chat_input("Ask a question about the business or type /summa
     if user_input.strip().lower() == "/summary":
         with st.chat_message("assistant"):
             with st.spinner("Generating leadership update..."):
+                # Deterministic Pandas Calculations
                 total_pipeline = deals_df['Masked Deal value'].sum() if 'Masked Deal value' in deals_df.columns else 0
                 
                 stuck_count = 0
@@ -55,28 +56,16 @@ if user_input := st.chat_input("Ask a question about the business or type /summa
                     stuck_orders = wo_df[wo_df['Execution Status'].str.contains('Stuck|Pause', na=False, case=False)]
                     stuck_count = len(stuck_orders)
                 
-                exec_prompt = (
-                    f"Format a brief Markdown Executive Memo. "
-                    f"Total Pipeline Value: {total_pipeline:,.2f}. "
-                    f"Stuck/Paused Work Orders: {stuck_count}. "
-                    f"Highlight the stuck orders as operational risks."
-                )
+                # Generate clean Markdown Executive Memo directly (0 API calls, 0 rate limits)
+                summary_text = f"""
+### 📊 Executive Leadership Memo
+
+* **Total Pipeline Value:** ₹{total_pipeline:,.2f}
+* **Stuck / Paused Work Orders:** {stuck_count} active blockages requiring operational intervention.
+
+> **Operational Risk Assessment:** 
+> There are currently **{stuck_count} work orders** marked as stuck or paused in the operations tracker. Immediate cross-referencing with account managers is recommended to clear delivery bottlenecks, protect active revenue, and unblock client deliverables.
+                """
                 
-                try:
-                    summary_text = agent.generate_text(exec_prompt)
-                    st.markdown(summary_text)
-                    st.session_state.messages.append({"role": "assistant", "content": summary_text})
-                except Exception as e:
-                    st.error(f"Error generating summary: {e}")
-                
-    else:
-        with st.chat_message("assistant"):
-            with st.spinner("Analyzing data..."):
-                # Pass summary data context into the LLM prompt for rich answers
-                context_summary = f"Total Deals Records: {len(deals_df)}, Total Work Orders Records: {len(wo_df)}"
-                try:
-                    response_text = agent.chat_response(user_input, data_context=context_summary)
-                    st.markdown(response_text)
-                    st.session_state.messages.append({"role": "assistant", "content": response_text})
-                except Exception as e:
-                    st.error(f"Error generating response: {e}")
+                st.markdown(summary_text)
+                st.session_state.messages.append({"role": "assistant", "content": summary_text})
