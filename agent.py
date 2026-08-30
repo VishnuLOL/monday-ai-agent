@@ -22,9 +22,9 @@ class BIAgent:
             "Always provide clear business context and explanations, not just raw numbers."
         )
         
-        # Using gemini-1.5-flash for fast, free-tier responses
+        # Updated to use the active stable alias to resolve the 404 error
         self.model = genai.GenerativeModel(
-            model_name="gemini-1.5-flash",
+            model_name="gemini-flash-latest",
             system_instruction=system_instruction
         )
 
